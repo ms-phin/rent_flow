@@ -10,7 +10,7 @@ import { UnitRepository } from './unit.repository';
 @Injectable()
 export class UnitService {
   constructor(
-    private unitRepository: UnitRepository, // Use UnitRepository
+    private unitRepository: UnitRepository,
     @InjectRepository(Property)
     private propertyRepository: Repository<Property>,
   ) {}
@@ -25,7 +25,7 @@ export class UnitService {
     }
     return this.unitRepository.create({
       ...unitData,
-      property,
+      propertyId,
     });
   }
 
@@ -43,7 +43,23 @@ export class UnitService {
 
   async update(id: string, updateUnitDto: UpdateUnitDto): Promise<Unit> {
     const unit = await this.findOne(id);
+
+    // If propertyId is provided, verify that the property exists
+    if (updateUnitDto.propertyId) {
+      const property = await this.propertyRepository.findOne({
+        where: { id: updateUnitDto.propertyId },
+      });
+
+      if (!property) {
+        throw new NotFoundException(
+          `Property with ID ${updateUnitDto.propertyId} not found`,
+        );
+      }
+    }
+
+    // Update the unit with the provided data
     Object.assign(unit, updateUnitDto);
+
     return this.unitRepository.update(unit);
   }
 
